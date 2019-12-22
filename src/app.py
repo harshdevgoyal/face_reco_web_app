@@ -1,6 +1,7 @@
-from fastai import *
-from fastai.vision import *
-import fastai
+
+#from fastai import *
+#from fastai.vision import *
+#import fastai
 import yaml
 import sys
 from io import BytesIO
@@ -9,18 +10,18 @@ import os
 import flask
 from flask import Flask
 import requests
-import torch
+#import torch
 import json
 
-with open("src/config.yaml", 'r') as stream:
+with open("config.yaml", 'r') as stream:
     APP_CONFIG = yaml.full_load(stream)
 
 app = Flask(__name__)
 
 
-def load_model(path=".", model_name="model.pkl"):
-    learn = load_learner(path, fname=model_name)
-    return learn
+# def load_model(path=".", model_name="model.pkl"):
+#     learn = load_learner(path, fname=model_name)
+#     return learn
 
 
 def load_image_url(url: str) -> Image:
@@ -29,26 +30,26 @@ def load_image_url(url: str) -> Image:
     return img
 
 
-def load_image_bytes(raw_bytes: ByteString) -> Image:
-    img = open_image(BytesIO(raw_bytes))
-    return img
+# def load_image_bytes(raw_bytes: ByteString) -> Image:
+#     img = open_image(BytesIO(raw_bytes))
+#     return img
 
 
-def predict(img, n: int = 3) -> Dict[str, Union[str, List]]:
-    pred_class, pred_idx, outputs = model.predict(img)
-    pred_probs = outputs / sum(outputs)
-    pred_probs = pred_probs.tolist()
-    predictions = []
-    for image_class, output, prob in zip(model.data.classes, outputs.tolist(), pred_probs):
-        output = round(output, 1)
-        prob = round(prob, 2)
-        predictions.append(
-            {"class": image_class.replace("_", " "), "output": output, "prob": prob}
-        )
+# def predict(img, n: int = 3) -> Dict[str, Union[str, List]]:
+#     pred_class, pred_idx, outputs = model.predict(img)
+#     pred_probs = outputs / sum(outputs)
+#     pred_probs = pred_probs.tolist()
+#     predictions = []
+#     for image_class, output, prob in zip(model.data.classes, outputs.tolist(), pred_probs):
+#         output = round(output, 1)
+#         prob = round(prob, 2)
+#         predictions.append(
+#             {"class": image_class.replace("_", " "), "output": output, "prob": prob}
+#         )
 
-    predictions = sorted(predictions, key=lambda x: x["output"], reverse=True)
-    predictions = predictions[0:n]
-    return {"class": str(pred_class), "predictions": predictions}
+#     predictions = sorted(predictions, key=lambda x: x["output"], reverse=True)
+#     predictions = predictions[0:n]
+#     return {"class": str(pred_class), "predictions": predictions}
 
 
 @app.route('/api/classify', methods=['POST', 'GET'])

@@ -65,109 +65,186 @@ class MainPage extends React.Component {
         super(props);
         this.state = {
             file: null,
-            predictions: [],
+            unknown_loaded:false,
+            known_loaded:false,
+            
             imageSelected: false,
             url: null,
             isLoading: false,
             selectedOption: null,
+            output:null,
+            recognized:false,
+            
 
         }
     }
 
-    _onFileUpload = (event) => {
-        this.setState({
-            rawFile: event.target.files[0],
-            file: URL.createObjectURL(event.target.files[0]),
-            imageSelected: true
-        })
-    };
+    // _onFileUpload = (event) => {
+    //     this.setState({
+    //         rawFile: event.target.files[0],
+    //         file: URL.createObjectURL(event.target.files[0]),
+    //         imageSelected: true
+    //     })
+    // };
 
-    _onUrlChange = (url) => {
-        this.state.url = url;
-        if ((url.length > 5) && (url.indexOf("http") === 0)) {
-            this.setState({
-                file: url,
-                imageSelected: true
-            })
-        }
-    };
+    // _onUrlChange = (url) => {
+    //     this.state.url = url;
+    //     if ((url.length > 5) && (url.indexOf("http") === 0)) {
+    //         this.setState({
+    //             file: url,
+    //             imageSelected: true
+    //         })
+    //     }
+    // };
 
     _clear = async (event) => {
         this.setState({
             file: null,
+            unknown_loaded:false,
+            known_loaded:false,
+            unknown_loading:false,
+            known_loading:false,
+            
             imageSelected: false,
-            predictions: [],
-            rawFile: null,
-            url: ""
+            url: null,
+            isLoading: false,
+            selectedOption: null,
+            output:null,
+            recognized:false,
+
         })
     };
 
-    _predict = async (event) => {
-        this.setState({isLoading: true});
-
-        let resPromise = null;
-        if (this.state.rawFile) {
-            const data = new FormData();
-            data.append('file', this.state.rawFile);
-            resPromise = axios.post('/api/classify', data);
-        } else {
-            resPromise = axios.get('/api/classify', {
-                params: {
-                    url: this.state.file
-                }
-            });
+    on_upload_group_pic = async (event) => {
+        console.log('group_started')
+        this.setState({
+            unknown_loading:true,
+            rawFile: event.target.files[0],
+            file: URL.createObjectURL(event.target.files[0]),
+            imageSelected: true 
+        })
+        // let resPromise = null
+        const data = new FormData();
+        // console.log(event.target.files[0].name);
+        data.append('file', event.target.files[0]);
+        let resPromise = axios.post('/api/upload_group_pic', data);
+        // console.log(resPromise)
+        try {
+            const res = await resPromise;
+            // const payload = res.data;
+            // console.log(resPromise)
+            this.setState({unknown_loaded:true,unknown_loading:false});
+            console.log(res)
+        } catch (e) {
+            alert(e)
         }
+    };
+
+    on_upload_ind_pics = async (event) => {
+        // this.setState({
+        //     rawFile: event.target.files[0],
+        //     file: URL.createObjectURL(event.target.files[0]),
+        //     imageSelected: true
+        // })
+        console.log('ind_started')
+        this.setState({known_loading:true})
+        const data = new FormData();
+        const files =event.target.files;
+
+        for(var i=0;i<files.length;i++){
+            data.append('file',files[i]);
+        }
+        
+        let resPromise = axios.post('/api/upload_ind_pics',data);
 
         try {
             const res = await resPromise;
-            const payload = res.data;
+            // const payload = res.data;
 
-            this.setState({predictions: payload.predictions, isLoading: false});
-            console.log(payload)
+            this.setState({known_loaded:true,known_loading: false})
+            console.log(res)
         } catch (e) {
             alert(e)
         }
     };
 
 
-    renderPrediction() {
-        const predictions = this.state.predictions || [];
+    // _predict = async (event) => {
+    //     this.setState({isLoading: true});
 
-        if (predictions.length > 0) {
+    //     let resPromise = null;
+    //     if (this.state.rawFile) {
+    //         const data = new FormData();
+    //         data.append('file', this.state.rawFile);
+    //         resPromise = axios.post('/api/classify', data);
+    //     } else {
+    //         resPromise = axios.get('/api/classify', {
+    //             params: {
+    //                 url: this.state.file
+    //             }
+    //         });
+    //     }
 
-            const predictionItems = predictions.map((item) =>
-                <li>{item.class} ({item.prob * 100}%) </li>
-            );
+    //     try {
+    //         const res = await resPromise;
+    //         const payload = res.data;
 
-            return (
-                <ul>
-                    {predictionItems}
-                </ul>
-            )
+    //         this.setState({predictions: payload.predictions, isLoading: false});
+    //         console.log(payload)
+    //     } catch (e) {
+    //         alert(e)
+    //     }
+    // };
 
-        } else {
-            return null
+    recognize=async()=>{
+        let resPromise= axios.get('/api/recognize');
+        try {
+           
+            const response=await resPromise;
+            // const file=response.data;
+            // this.state.output=file;
+            // console.log(this.state.output)
+            // console.log(this.state.recognized);
+            this.setState({recognized:true})
+            console.log('Recognition done:',this.state.recognized);
+            // console.log('success');
+        }catch (e) {
+            alert(e)
         }
-    }
+    };
+
+
+    // renderPrediction() {
+
+    //     return (
+    //         <ul>
+    //             {this.state.output}
+    //         </ul>
+    //     )
+
+    //     } else {
+    //         return null
+    //     }
+    // }
 
     handleChange = (selectedOption) => {
         this.setState({selectedOption});
         console.log(`Option selected:`, selectedOption);
     };
 
-    sampleUrlSelected  = (item) => {
-        this._onUrlChange(item.url);
-    };
+    // sampleUrlSelected  = (item) => {
+    //     this._onUrlChange(item.url);
+    // };
     render() {
         const sampleImages = APP_CONFIG.sampleImages;
         return (
             <div>
-                <h2>{APP_CONFIG.description}</h2>
+                <h3>{APP_CONFIG.description}</h3>
 
-                <p>Select an image </p>
+                {/* <p>Upload Images</p> */}
 
                 <Form>
-                    <FormGroup>
+                    {/* <FormGroup>
                         <div>
                             <p>Provide a Url</p>
                             <div>
@@ -190,46 +267,93 @@ class MainPage extends React.Component {
                             <Input value={this.state.url} name="file" onChange={(e)=>this._onUrlChange(e.target.value)}
                             />
                         </div>
-                    </FormGroup>
+                    </FormGroup> */}
 
-                    <h3>OR</h3>
+                    {/* <h3>OR</h3> */}
                     <FormGroup id={"upload_button"}>
                         <div>
-                            <p>Upload an image</p>
+                            <p><strong>Upload Individual Pictures</strong></p>
                         </div>
                         <Label for="imageUpload">
-                            <Input type="file" name="file" id="imageUpload" accept=".png, .jpg, .jpeg" ref="file"
-                                   onChange={this._onFileUpload}/>
-                            <span className="btn btn-primary">Upload</span>
+                                <input type="file" name="files" id="imageUpload" accept=".png, .jpg, .jpeg" ref='files'
+                                        onChange={this.on_upload_ind_pics} multiple/>
+                                <span className="btn btn-primary">Upload</span>                               
                         </Label>
                     </FormGroup>
 
-                    <img src={this.state.file} className={"img-preview"} hidden={!this.state.imageSelected}/>
-
-                    <FormGroup>
-                        <Button color="success" onClick={this._predict}
-                                disabled={this.state.isLoading}> Predict</Button>
-                        <span className="p-1 "/>
-                        <Button color="danger" onClick={this._clear}> Clear</Button>
-                    </FormGroup>
-
-
-                    {this.state.isLoading && (
+                    {this.state.known_loading && (
                         <div>
                             <Spinner color="primary" type="grow" style={{width: '5rem', height: '5rem'}}/>
 
                         </div>
                     )}
 
-                </Form>
+                    {/* <FormGroup id={"upload_button"}>
+                        <div>
+                            <p><strong>Upload Individual Pictures</strong></p>
+                        </div>
+                        <Label for="imageUpload">
+                            <form action='/api/upload_ind_pics' method="POST" enctype="multipart/form-data">
+                                <input type="file" name="files" id="imageUpload" accept=".png, .jpg, .jpeg" 
+                                         multiple/>
+                                <span className="btn btn-primary">Upload</span>
+                                <div> </div>
+                                <input type="submit" value="Submit" id="upload-button"/>
+                                
+                            </form> 
+                        </Label>
+                    </FormGroup> */}
 
-                {this.renderPrediction()}
+                    <FormGroup id={"upload_button"}>
+                        <div>
+                            <p><strong>Upload Group Picture</strong></p>
+                        </div>
+                        <Label for="imageUpload1">
+                            <Input type="file" name="file" id="imageUpload1" accept=".png, .jpg, .jpeg" ref="file"
+                                   onChange={this.on_upload_group_pic}/>
+                            
+                            <span className="btn btn-primary">Upload</span>
+                        </Label>
+                    </FormGroup>
+                    
+                    {this.state.unknown_loading && (
+                        <div>
+                            <Spinner color="primary" type="grow" style={{width: '5rem', height: '5rem'}}/>
+
+                        </div>
+                    )}
+
+                    <img src={this.state.file} className={"img-preview"} hidden={!this.state.imageSelected}/>
+
+                    <FormGroup>
+                        <Button color="success" onClick={this.recognize}
+                                disabled={!(this.state.unknown_loaded && this.state.known_loaded)}>
+                                     Recognize</Button>
+                        <span className="p-1 "/>
+                        <Button color="danger" onClick={this._clear}> Clear</Button>
+                    </FormGroup>
+
+
+                    {/* {this.state.isLoading && (
+                        <div>
+                            <Spinner color="primary" type="grow" style={{width: '5rem', height: '5rem'}}/>
+
+                        </div>
+                    )} */}
+
+                </Form>
+                
+                
+                <img src={"./static/output.jpg?t=" + new Date().getTime()} className={"img-preview"} hidden={!this.state.recognized} />
+                
 
 
             </div>
         );
     }
 }
+
+
 
 class CustomNavBar extends React.Component {
 
@@ -239,7 +363,7 @@ class CustomNavBar extends React.Component {
         return (
             <Navbar color="light" light fixed expand="md">
                 <NavbarBrand href="/">{APP_CONFIG.title}</NavbarBrand>
-                <Collapse navbar>
+                {/* <Collapse navbar>
                     <Nav className="ml-auto" navbar>
                         <NavItem>
                             <NavLink href="/about">About</NavLink>
@@ -249,7 +373,7 @@ class CustomNavBar extends React.Component {
                         </NavItem>
 
                     </Nav>
-                </Collapse>
+                </Collapse> */}
             </Navbar>
         )
     }

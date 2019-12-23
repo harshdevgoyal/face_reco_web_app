@@ -47,7 +47,7 @@ COPY . /root/face_recognition
 RUN cd /root/face_recognition && \
     pip3 install -r requirements.txt
 
-ENV PORT=8000
+# ENV PORT=8000
 
 # Start the server
 CMD ["python", "src/app.py", "serve"]

@@ -1,13 +1,13 @@
 import face_recognition
 import shutil
 import numpy as np
-import pandas as pd 
+#import pandas as pd 
 # import cv2
 import glob
 from PIL import Image, ImageDraw
 import os
 #from IPython.display import display
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 from typing import List, Dict, Union, ByteString, Any
 from io import BytesIO
 import time

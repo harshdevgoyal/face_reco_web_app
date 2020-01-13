@@ -116,6 +116,7 @@ class MainPage extends React.Component {
     };
 
     on_upload_group_pic = async (event) => {
+        const start = Date.now()
         console.log('group_started')
         this.setState({
             unknown_loading:true,
@@ -134,7 +135,10 @@ class MainPage extends React.Component {
             // const payload = res.data;
             // console.log(resPromise)
             this.setState({unknown_loaded:true,unknown_loading:false});
+            const end=Date.now()
+            console.log('Time taken:',(end-start)/1000,'seconds')
             console.log(res)
+            
         } catch (e) {
             alert(e)
         }
@@ -146,6 +150,7 @@ class MainPage extends React.Component {
         //     file: URL.createObjectURL(event.target.files[0]),
         //     imageSelected: true
         // })
+        const start=Date.now()
         console.log('ind_started')
         this.setState({known_loading:true})
         const data = new FormData();
@@ -162,6 +167,8 @@ class MainPage extends React.Component {
             // const payload = res.data;
 
             this.setState({known_loaded:true,known_loading: false})
+            const end=Date.now()
+            console.log('Time taken:',(end-start)/1000,'seconds')
             console.log(res)
         } catch (e) {
             alert(e)
@@ -169,33 +176,7 @@ class MainPage extends React.Component {
     };
 
 
-    // _predict = async (event) => {
-    //     this.setState({isLoading: true});
-
-    //     let resPromise = null;
-    //     if (this.state.rawFile) {
-    //         const data = new FormData();
-    //         data.append('file', this.state.rawFile);
-    //         resPromise = axios.post('/api/classify', data);
-    //     } else {
-    //         resPromise = axios.get('/api/classify', {
-    //             params: {
-    //                 url: this.state.file
-    //             }
-    //         });
-    //     }
-
-    //     try {
-    //         const res = await resPromise;
-    //         const payload = res.data;
-
-    //         this.setState({predictions: payload.predictions, isLoading: false});
-    //         console.log(payload)
-    //     } catch (e) {
-    //         alert(e)
-    //     }
-    // };
-
+  
     recognize=async()=>{
         let resPromise= axios.get('/api/recognize');
         try {
@@ -214,19 +195,7 @@ class MainPage extends React.Component {
     };
 
 
-    // renderPrediction() {
-
-    //     return (
-    //         <ul>
-    //             {this.state.output}
-    //         </ul>
-    //     )
-
-    //     } else {
-    //         return null
-    //     }
-    // }
-
+ 
     handleChange = (selectedOption) => {
         this.setState({selectedOption});
         console.log(`Option selected:`, selectedOption);
@@ -333,6 +302,10 @@ class MainPage extends React.Component {
                         <Button color="danger" onClick={this._clear}> Clear</Button>
                     </FormGroup>
 
+                    <a target="_blank" hidden={!this.state.recognized} href={"./static/output.jpg?t=" + new Date().getTime()} download="output.jpg" class="btn btn-primary">Output</a>
+                    <span className="p-1 "/>
+                    <a target="_blank" hidden={!this.state.recognized} href={"./static/array.jpg?t=" + new Date().getTime()} download="labels.jpg" class="btn btn-primary">Labels</a>
+
 
                     {/* {this.state.isLoading && (
                         <div>
@@ -343,8 +316,9 @@ class MainPage extends React.Component {
 
                 </Form>
                 
-                
+                {this.state.recognized && (
                 <img src={"./static/output.jpg?t=" + new Date().getTime()} className={"img-preview"} hidden={!this.state.recognized} />
+                )}
                 
 
 

@@ -42,36 +42,65 @@ thickness = 2
 font = cv2.FONT_HERSHEY_SIMPLEX 
 
 
+def get_best_matches():
+
+    face_distances=[]
+
+    for face_encoding in  unknown_face_encodings:
+        face_distances.append(face_recognition.face_distance(known_face_encodings, face_encoding))
+    face_distances=np.asarray(face_distances)
+
+    unknown,known=face_distances.shape
+
+    sorted_known=np.argsort(face_distances,axis=-1)
+    sorted_distances=np.sort(face_distances,axis=-1)
+    count=np.full(unknown,0)    
+
+    best_known=sorted_known[np.arange(unknown),count]
+    distance_known=sorted_distances[np.arange(unknown),count]
+
+    flag=True
+    #Handling duplicates
+    while flag:
+        u,c=np.unique(best_known[best_known!=1000],return_counts=True)
+        
+        if np.sum(c>1)==0:
+            break
+            
+        for i in u[c>1]:
+            locs=np.argwhere(best_known==i)
+            dists=distance_known[locs]
+
+            locs=np.delete(locs,np.argmin(dists))
+            for loc in locs:
+                if count[loc]<known-1:
+                    count[loc]+=1
+                    distance_known[loc]=sorted_distances[loc,count[loc]]
+                    best_known[loc]=sorted_known[loc,count[loc]]
+                elif count[loc]==known-1:
+                    best_known[loc]=1000
+    
+    return best_known,distance_known
+                
+       
+
+
 def get_output():
+    
+    best_known,distance_known=get_best_matches()
+    tolerance=0.5
     pil_image = Image.fromarray(unknown_image)
     # Create a Pillow ImageDraw Draw instance  to draw with
     draw = ImageDraw.Draw(pil_image)
-    # Loop through each face found in the unknown image
 
-    for (top, right, bottom, left), face_encoding in zip(unknown_face_locations, unknown_face_encodings):
-
+    for (top, right, bottom, left), idx,distance in zip(unknown_face_locations, best_known, distance_known):
         
-        # See if the face is a match for the known face(s)
-        #matches = face_recognition.face_distance(known_face_encodings, face_encoding)
-        
-        name = "__"
-
-        # Or instead, use the known face with the smallest distance to the new face
-
-        face_distances = face_recognition.face_distance(known_face_encodings, face_encoding)
-
-        # ind=np.argsort(face_distances)
-        # distances.append(face_distances[ind])
-        # names.append(np.array(known_face_names)[ind])
-        # indexes.append(i)
-
-        #if min(face_distances)<=0.55:
-        best_match_index = np.argmin(face_distances)
-        name = known_face_names[best_match_index]
+        if idx==1000 or distance>tolerance:
+            name='__'
+        else:
+            name=known_face_names[idx]
             
-        #if matches[best_match_index]:
-
-        # Draw a box around the face using the Pillow module
+    # Draw a box around the face using the Pillow module
         draw.rectangle(((left, top), (right, bottom)), outline=(0, 0, 255))
         # Draw a label with a name below the face
         text_width, text_height = draw.textsize(name)
@@ -81,17 +110,8 @@ def get_output():
     # Remove the drawing library from memory as per the Pillow docs
     del draw
 
-    # Display the resulting image
-    #pil_image.save(directory+'output.jpg')
-
-    # b=BytesIO()
-    # pil_image=pil_image.resize((512,512))
-    # pil_image.save(b,'jpeg')
-    # return b
-    #print(type(pil_image))
     pil_image.save(path+'static/output.jpg')
-    #return flask.send_file(flask.url_for()'output.jpg',mimetype='image/jpg')
-    #display(pil_image)
+                 
 
 def create_unknown_face_encodings(raw_bytes: ByteString):
     global unknown_image

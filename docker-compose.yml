@@ -1,0 +1,28 @@
+version: "3"
+
+services:
+  nginx:
+    image: nginx:latest
+    container_name: ng01
+    ports:
+        - "8000:80"
+    volumes:
+        - ./src:/src
+        - ./config/nginx:/etc/nginx/conf.d
+    depends_on:
+        - web
+
+
+  web:
+    image: face-app
+    container_name: app
+    command: bash -c "gunicorn -b 0.0.0.0:8000  src.app:app"
+    #command: bash -c "python src/app.py"
+    volumes:
+        - ./src:/app/src
+    # environment:
+    #     MODEL_NAME='model.pth'
+    #     MODEL_PATH='/app/models'
+    expose:
+        - "8000"
+

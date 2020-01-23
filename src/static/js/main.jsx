@@ -67,35 +67,17 @@ class MainPage extends React.Component {
             file: null,
             unknown_loaded:false,
             known_loaded:false,
-            
+            unknown_loading:false,
+            known_loading:false,
             imageSelected: false,
             url: null,
             isLoading: false,
             selectedOption: null,
             output:null,
             recognized:false,
-            
-
         }
     }
 
-    // _onFileUpload = (event) => {
-    //     this.setState({
-    //         rawFile: event.target.files[0],
-    //         file: URL.createObjectURL(event.target.files[0]),
-    //         imageSelected: true
-    //     })
-    // };
-
-    // _onUrlChange = (url) => {
-    //     this.state.url = url;
-    //     if ((url.length > 5) && (url.indexOf("http") === 0)) {
-    //         this.setState({
-    //             file: url,
-    //             imageSelected: true
-    //         })
-    //     }
-    // };
 
     _clear = async (event) => {
         this.setState({
@@ -144,12 +126,39 @@ class MainPage extends React.Component {
         }
     };
 
+    _sample_group_pic = async (event) => {
+        const start = Date.now()
+        console.log('group_started')
+        // console.log(APP_CONFIG.sampleGroupImage[0].url)
+        this.setState({
+            unknown_loading:true,
+            file: './static/sample/group.jpg',
+            imageSelected: true 
+        },()=>{
+            console.log(this.state)  
+        })
+        // console.log(this.state)
+        // console.log(this.state.file)
+        let resPromise = axios.get('/api/upload_group_pic')
+
+        try {
+            const res = await resPromise;
+            // const payload = res.data;
+            // console.log(resPromise)
+            this.setState({unknown_loaded:true,unknown_loading:false});
+            const end=Date.now()
+            console.log('Time taken:',(end-start)/1000,'seconds')
+            console.log(res)
+            
+        } catch (e) {
+            alert(e)
+        }
+    };
+
+
+
     on_upload_ind_pics = async (event) => {
-        // this.setState({
-        //     rawFile: event.target.files[0],
-        //     file: URL.createObjectURL(event.target.files[0]),
-        //     imageSelected: true
-        // })
+  
         const start=Date.now()
         console.log('ind_started')
         this.setState({known_loading:true})
@@ -176,16 +185,35 @@ class MainPage extends React.Component {
     };
 
 
+    _sample_ind_pics = async (event) => {
+  
+        const start=Date.now()
+        console.log('ind_started')
+        this.setState({known_loading:true})
+        
+        let resPromise = axios.get('/api/upload_ind_pics');
+
+        try {
+            const res = await resPromise;
+            // const payload = res.data;
+
+            this.setState({known_loaded:true,known_loading: false})
+            const end=Date.now()
+            console.log('Time taken:',(end-start)/1000,'seconds')
+            console.log(res)
+        } catch (e) {
+            alert(e)
+        }
+    };
+
+
   
     recognize=async()=>{
         let resPromise= axios.get('/api/recognize');
         try {
            
             const response=await resPromise;
-            // const file=response.data;
-            // this.state.output=file;
-            // console.log(this.state.output)
-            // console.log(this.state.recognized);
+        
             this.setState({recognized:true})
             console.log('Recognition done:',this.state.recognized);
             // console.log('success');
@@ -201,9 +229,7 @@ class MainPage extends React.Component {
         console.log(`Option selected:`, selectedOption);
     };
 
-    // sampleUrlSelected  = (item) => {
-    //     this._onUrlChange(item.url);
-    // };
+
     render() {
         const sampleImages = APP_CONFIG.sampleImages;
         return (
@@ -213,31 +239,7 @@ class MainPage extends React.Component {
                 {/* <p>Upload Images</p> */}
 
                 <Form>
-                    {/* <FormGroup>
-                        <div>
-                            <p>Provide a Url</p>
-                            <div>
-
-                                <UncontrolledDropdown >
-                                    <DropdownToggle caret>
-                                        Sample Image Url
-                                    </DropdownToggle>
-                                    <DropdownMenu>
-                                        {sampleImages.map(si =>
-                                            <DropdownItem onClick={()=>this.sampleUrlSelected(si)}>
-                                                {si.name}
-                                            </DropdownItem>)
-                                        }
-
-                                    </DropdownMenu>
-                                </UncontrolledDropdown>
-
-                            </div>
-                            <Input value={this.state.url} name="file" onChange={(e)=>this._onUrlChange(e.target.value)}
-                            />
-                        </div>
-                    </FormGroup> */}
-
+                
                     {/* <h3>OR</h3> */}
                     <FormGroup id={"upload_button"}>
                         <div>
@@ -248,6 +250,12 @@ class MainPage extends React.Component {
                                         onChange={this.on_upload_ind_pics} multiple/>
                                 <span className="btn btn-primary">Upload</span>                               
                         </Label>
+                        <span className="p-1 "/>
+                        <span>or</span>
+                        <span className="p-1 "/>
+                        <Button color='primary' onClick={this._sample_ind_pics}>
+                                     Get Samples
+                        </Button>
                     </FormGroup>
 
                     {this.state.known_loading && (
@@ -257,25 +265,11 @@ class MainPage extends React.Component {
                         </div>
                     )}
 
-                    {/* <FormGroup id={"upload_button"}>
-                        <div>
-                            <p><strong>Upload Individual Pictures</strong></p>
-                        </div>
-                        <Label for="imageUpload">
-                            <form action='/api/upload_ind_pics' method="POST" enctype="multipart/form-data">
-                                <input type="file" name="files" id="imageUpload" accept=".png, .jpg, .jpeg" 
-                                         multiple/>
-                                <span className="btn btn-primary">Upload</span>
-                                <div> </div>
-                                <input type="submit" value="Submit" id="upload-button"/>
-                                
-                            </form> 
-                        </Label>
-                    </FormGroup> */}
 
                     <FormGroup id={"upload_button"}>
                         <div>
                             <p><strong>Upload Group Picture</strong></p>
+                            
                         </div>
                         <Label for="imageUpload1">
                             <Input type="file" name="file" id="imageUpload1" accept=".png, .jpg, .jpeg" ref="file"
@@ -283,6 +277,13 @@ class MainPage extends React.Component {
                             
                             <span className="btn btn-primary">Upload</span>
                         </Label>
+                        <span className="p-1 "/>
+                        <span>or</span>
+                        <span className="p-1 "/>
+                        <Button color='primary' onClick={this._sample_group_pic}>
+                                     Get Sample
+                        </Button>
+
                     </FormGroup>
                     
                     {this.state.unknown_loading && (
@@ -307,12 +308,6 @@ class MainPage extends React.Component {
                     <a target="_blank" hidden={!this.state.recognized} href={"./static/array.jpg?t=" + new Date().getTime()} download="labels.jpg" class="btn btn-primary">Labels</a>
 
 
-                    {/* {this.state.isLoading && (
-                        <div>
-                            <Spinner color="primary" type="grow" style={{width: '5rem', height: '5rem'}}/>
-
-                        </div>
-                    )} */}
 
                 </Form>
                 

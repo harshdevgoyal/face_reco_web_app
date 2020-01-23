@@ -42,12 +42,12 @@ RUN cd ~ && \
 #ADD models models
 #ADD src src
 
-COPY . /root/face_recognition
+RUN cd /
+RUN mkdir /app
+WORKDIR /app
+COPY requirements.txt ./
+RUN pip install -r requirements.txt 
 
-RUN cd /root/face_recognition && \
-    pip3 install -r requirements.txt
-
-# ENV PORT=8000
-
+EXPOSE 8000
 # Start the server
-CMD ["python", "src/app.py", "serve"]
+CMD ["python", "src/app.py"]

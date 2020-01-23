@@ -6,10 +6,10 @@ from typing import List, Dict, Union, ByteString, Any
 import os
 import flask
 from flask import Flask
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 import cv2
 import requests
-import json
+#import json
 import face_recognition
 from PIL import Image,ImageDraw
 import concurrent.futures
@@ -88,7 +88,7 @@ def get_best_matches():
 def get_output():
     
     best_known,distance_known=get_best_matches()
-    tolerance=0.5
+    tolerance=0.6
     pil_image = Image.fromarray(unknown_image)
     # Create a Pillow ImageDraw Draw instance  to draw with
     draw = ImageDraw.Draw(pil_image)
@@ -113,10 +113,10 @@ def get_output():
     pil_image.save(path+'static/output.jpg')
                  
 
-def create_unknown_face_encodings(raw_bytes: ByteString):
+def create_unknown_face_encodings(image):
     global unknown_image
     #print(type(BytesIO(raw_bytes)))
-    unknown_image=face_recognition.load_image_file(BytesIO(raw_bytes))
+    unknown_image=face_recognition.load_image_file(image)
     unknown_face_locations = face_recognition.face_locations(unknown_image)
     unknown_face_encodings=face_recognition.face_encodings(unknown_image,unknown_face_locations)
     return unknown_face_locations,unknown_face_encodings
@@ -150,52 +150,54 @@ def make_image_array(known_face_names,known_face_images):
                             fontScale, color, thickness, cv2.LINE_AA)
         img_array[i//c*l:(i//c+1)*l,i%c*w:(i%c+1)*w,:]=image
     #print(len(small_images))    
-    img_array=img_array.astype(int)
-    plt.imsave(path+'static/array.jpg', img_array/255)
+    img_array=img_array.astype(np.uint8)
+    #plt.imsave(path+'static/array.jpg', img_array/255)
+    img=Image.fromarray(img_array)
+    img.save(path+'static/array.jpg')
 
     #del known_face_images
 
 
-@app.route('/api/upload_group_pic', methods=['POST'])
+@app.route('/api/upload_group_pic', methods=['POST','GET'])
 def upload_group_pic():
-    file=flask.request.files['file']
-    filename=file.filename
-    bytes = file.read()
+    if flask.request.method == 'GET':
+        image=path+'static/sample/group.jpg'
+    else:
+        file=flask.request.files['file']
+        #filename=file.filename
+        bytes = file.read()
+        image=BytesIO(bytes)
     # print(bytes)
     global unknown_face_locations
     global unknown_face_encodings
-    unknown_face_locations,unknown_face_encodings=create_unknown_face_encodings(bytes)
+    unknown_face_locations,unknown_face_encodings=create_unknown_face_encodings(image)
     #print(os.path.splitext(filename)[0])
     print(f'No of unknown encodings:{len(unknown_face_encodings)}')
     return f'No of unknown encodings:{len(unknown_face_encodings)}'
 
 
 def process_ind_image(image):
-    #filename=file.filename
-        #bytes=file.read()
-        #known_face_names.append(os.path.splitext(filename)[0])
-        # name=str(i)
-        # i=i+1
-        # known_face_names.append(name)
-        #known_face_encodings.append(create_known_face_encodings(bytes))
         return face_recognition.face_encodings(image)[0]
 
-
-@app.route('/api/upload_ind_pics', methods=['POST'])
+@app.route('/api/upload_ind_pics', methods=['POST','GET'])
 def upload_ind_pic():
-  
-    #global known_face_images
+    
     global known_face_encodings
     global known_face_names
     known_face_encodings=[]
-    #known_face_names=[]
     known_face_images=[]
-    # global small_images
-    # small_images=[]
-    files = flask.request.files.getlist('file')
 
-    for file in files:
-        known_face_images.append(face_recognition.load_image_file(BytesIO(file.read())))
+    if flask.request.method == 'GET':
+        for filename in os.listdir(path+'static/sample/individual/'):
+            known_face_images.append(
+                face_recognition.load_image_file(
+                    path+'static/sample/individual/'+filename)
+                    )
+
+    else:
+        files = flask.request.files.getlist('file')
+        for file in files:
+            known_face_images.append(face_recognition.load_image_file(BytesIO(file.read())))
     #print(len(known_face_images),known_face_images[0],type(known_face_images[0]))
     # with concurrent.futures.ProcessPoolExecutor as executor:
     #     encodings=executor.map(process_ind_image,files)
